@@ -165,7 +165,7 @@ function convert_object(layout, json) {
 
 function box_object(json) {
    let style = ''
-   let {layout, position, flex, spacing, margin, width, height, backgroundColor, borderColor, borderWidth, cornerRadius, justifyContent, alignItems, offsetTop, offsetBottom, offsetStart, offsetEnd, paddingAll, paddingTop, paddingBottom, paddingStart, paddingEnd, background, maxWidth, maxHeight} = json
+   let {layout, position, flex, spacing, margin, width, height, backgroundColor, borderColor, borderWidth, cornerRadius, justifyContent, alignItems, offsetTop, offsetBottom, offsetStart, offsetEnd, paddingAll, paddingTop, paddingBottom, paddingStart, paddingEnd, background, maxWidth, maxHeight, action} = json
    if (layout === 'baseline') {
       layout1 = 'hr'
       layout2 = 'bl'
@@ -366,7 +366,16 @@ function box_object(json) {
       style += `max-height:${maxHeight};`
    }
 
-   return `<div class="MdBx ${layout1} ${layout2} ${fl} ${exabs} ${exmgn} ${spc} ${ExBdr} ${ExBdrRad} ${jfc} ${alg} ${ext} ${exb} ${exl} ${exr} ${ExPadA} ${ExPadT} ${ExPadB} ${ExPadL} ${ExPadR}" style="${style}"><!-- content --></div>`
+   action = (!action) ? {type: 'none'} : action
+   if(action.type === 'uri'){
+      return `<div class="MdBx ${layout1} ${layout2} ${fl} ${exabs} ${exmgn} ${spc} ${ExBdr} ${ExBdrRad} ${jfc} ${alg} ${ext} ${exb} ${exl} ${exr} ${ExPadA} ${ExPadT} ${ExPadB} ${ExPadL} ${ExPadR}" style="${style}; cursor: pointer;" onclick="window.open('${action.uri}', '_blank')"  ><!-- content --></div>`
+   }else if(action.type === 'message') {
+      return `<div class="MdBx ${layout1} ${layout2} ${fl} ${exabs} ${exmgn} ${spc} ${ExBdr} ${ExBdrRad} ${jfc} ${alg} ${ext} ${exb} ${exl} ${exr} ${ExPadA} ${ExPadT} ${ExPadB} ${ExPadL} ${ExPadR}" style="${style}" onclick="window.alert('message : ${action.text}')"><!-- content --></div>`
+   }else if(action.type === 'postback'){
+      return `<div class="MdBx ${layout1} ${layout2} ${fl} ${exabs} ${exmgn} ${spc} ${ExBdr} ${ExBdrRad} ${jfc} ${alg} ${ext} ${exb} ${exl} ${exr} ${ExPadA} ${ExPadT} ${ExPadB} ${ExPadL} ${ExPadR}" style="${style}" onclick="window.alert('postback : ${action.data}')"><!-- content --></div>`
+   }else {
+      return `<div class="MdBx ${layout1} ${layout2} ${fl} ${exabs} ${exmgn} ${spc} ${ExBdr} ${ExBdrRad} ${jfc} ${alg} ${ext} ${exb} ${exl} ${exr} ${ExPadA} ${ExPadT} ${ExPadB} ${ExPadL} ${ExPadR}" style="${style}"><!-- content --></div>`
+   }
 }
 
 function button_object(json) {
@@ -630,8 +639,6 @@ function image_object(json) {
                   </div>
                </div>`
    }
-
-
 }
 
 function separator_object(layout, json) {
@@ -745,7 +752,7 @@ function footer_struc(json) {
 function text_object(json) {
 
    let style2 = ''
-   let {flex, margin, size, position, align, gravity, text, color, weight, style, decoration, wrap, maxLines, adjustMode, offsetTop, offsetBottom, offsetStart, offsetEnd, lineSpacing} = json
+   let {flex, margin, size, position, align, gravity, text, color, weight, style, decoration, wrap, maxLines, adjustMode, offsetTop, offsetBottom, offsetStart, offsetEnd, lineSpacing, action} = json
 
    fl = ''
    if (flex > 3) {
@@ -807,12 +814,29 @@ function text_object(json) {
       exr = (offsetEnd) ? 'ExR' + upperalldigit(offsetEnd) : ''
    }
 
+   let cstyle = ''
+   if(maxLines && /\d{0,2}/.test(maxLines)){
+      // style2 += `display : -webkit-box; -webkit-line-clamp : ${maxLines}; text-overflow: ellipsis; overflow:hidden; -webkit-box-orient: vertical; `
+      cstyle = `display: -webkit-box; -webkit-line-clamp: ${maxLines}; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;`
+   }
+
    if (lineSpacing && lineSpacing.indexOf("px") >= 0) {
       let lineHeight = (parseInt(lineSpacing.replace('px', '')) + 15) + 'px'
       style2 += `line-height:${lineHeight};`
    }
-   text = (!text) ? '' : text
-   return `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><p>${text}<!-- content --></p></div>`
+   text = (!text) ? '' : text.replace(/\n/g, '</br>')
+   // return `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><p>${text}<!-- content --></p></div>`
+   //     `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><p>${text}<!-- content --></p></div>`
+   action = (!action) ? {type : 'none'} : action
+   if (action.type === 'uri') {
+      return `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><a target="_blank" href=${action.uri} style="color: inherit; ${cstyle}">${text}<!-- content --></a></div>`
+   }else if(action.type === 'message'){
+      return `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><p style="${cstyle}" onclick="alert('message : ${action.text}')">${text}<!-- content --></p></div>`
+   }else if(action.type === 'postback'){
+      return `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><p style="${cstyle}" onclick="alert('postback : ${action.data}')">${text}<!-- content --></p></div>`
+   }else {
+      return `<div class="MdTxt ${fl} ${exabs} ${exmgn} ${alg} ${grv} ${size} ${ExWB} ${ExFntSty} ${ExTxtDec} ${ExWrap} ${ext} ${exb} ${exl} ${exr}" style="${style2}"><p style="${cstyle}" > ${text}<!-- content --></p></div>`
+   }
 }
 
 function upper1digit(str) {
